@@ -33,10 +33,29 @@ library(sp)
 Produce one or more plots that demonstrate the relationship between the Landsat bands and the VCF tree cover. What can you conclude from this/these plot(s)?
 
 ```{r}
-# put the 3 bands into a rasterBrick object to summarize together
-gewata <- brick(GewataB1, GewataB2, GewataB3, GewataB4, GewataB5, GewataB7, vcfGewata)
-
+#make a brick of all bands with the vcf
+Gewata1 <- brick(GewataB1, vcfGewata)
+Gewata2 <- brick(GewataB2, vcfGewata)
+Gewata3 <- brick(GewataB3, vcfGewata)
+Gewata4 <- brick(GewataB4, vcfGewata)
+Gewata5 <- brick(GewataB5, vcfGewata)
+Gewata6 <- brick(GewataB7, vcfGewata)
+# make a scatterplot matrix
+pairs(Gewata1)
+pairs(Gewata2)
+pairs(Gewata3)
+pairs(Gewata4)
+pairs(Gewata5)
+pairs(Gewata6)
 ```
+Conclusions (correlationmatrix): 
+          vcf
+band1     0.66
+band2     0.76
+band3     0.80
+band4     0.18
+band5     0.77
+band7     0.81
 
 Create an lm() model and show a summary (e.g. using summary()) of the model object you created. Which predictors (bands) are probably most important in predicting tree cover?
 
