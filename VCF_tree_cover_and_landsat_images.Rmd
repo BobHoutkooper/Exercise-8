@@ -48,8 +48,7 @@ pairs(Gewata4)
 pairs(Gewata5)
 pairs(Gewata6)
 ```
-Conclusions (correlationmatrix): 
-          vcf
+Conclusions (correlation with vcf): 
 band1     0.66
 band2     0.76
 band3     0.80
