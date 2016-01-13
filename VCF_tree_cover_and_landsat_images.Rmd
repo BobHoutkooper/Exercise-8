@@ -8,7 +8,7 @@ output: html_document
 Setwd, create directories and download data
 ```{r}
 #set working directory
-setwd('~/bin/Exercise 8_project')
+setwd('~/bin/Exercise-8')
 #create data map
 dir.create('Data')
 #download, unzip and load band images of Landsat 7
@@ -28,10 +28,9 @@ Load required packages
 library(raster)
 library(sp)
 ```
+--------------------------------------------------------------------------------------------------------------------------------
 
-
-Produce one or more plots that demonstrate the relationship between the Landsat bands and the VCF tree cover. What can you conclude from this/these plot(s)?
-
+(1) Produce one or more plots that demonstrate the relationship between the Landsat bands and the VCF tree cover. What can you conclude from this/these plot(s)?
 ```{r}
 #make a brick of all bands with the vcf
 Gewata1 <- brick(GewataB1, vcfGewata)
@@ -48,37 +47,62 @@ pairs(Gewata4)
 pairs(Gewata5)
 pairs(Gewata6)
 ```
-Conclusions (correlation with vcf): 
-band1     0.66
-band2     0.76
-band3     0.80
-band4     0.18
-band5     0.77
-band7     0.81
 
-Create an lm() model and show a summary (e.g. using summary()) of the model object you created. Which predictors (bands) are probably most important in predicting tree cover?
+Conclusions (correlation with vcf): band1 - 0.66, band2 - 0.76, band3 - 0.80, band4 - 0.18, band5 - 0.77, band7 - 0.81. The near-infrared band(4) shows very little correlation with vcf(tree cover), therefor it is not interesting for calculating the tree cover.
+--------------------------------------------------------------------------------------------------------------------------------
 
-```{r, echo=FALSE}
-
-```
-
-Plot the predicted tree cover raster and compare with the original VCF raster.
-
+(2) Create an lm() model and show a summary (e.g. using summary()) of the model object you created. Which predictors (bands) are probably most important in predicting tree cover?
 ```{r}
+#Remove water, cloud or cloud shadow pixels.
+vcfGewata[vcfGewata > 100] <- NA
 
+#Make a brick with all bands
+gewata <- brick(GewataB1, GewataB2, GewataB3, GewataB5, GewataB7)
+#Get original values
+gewata <- calc(gewata, fun=function(x) x / 10000)
+gewata <- addLayer(gewata, vcfGewata)
+#Change names
+names(gewata) <- c("band1", "band2", "band3", "band5", "band7", "vcf")
+#Make data frame
+valuetable <- getValues(gewata)
+valuetable <- as.data.frame(valuetable)
+valuetable <- na.omit(valuetable)
+#Make matrix
+
+#Execute Regression
+regression <- lm(vcf ~ band1 + band2+ band3 + band5 + band7, data=valuetable)
+summary(regression)
 ```
 
-compute the RMSE between your predicted and the actual tree cover values
+Conclusion: Band 5 has the biggest influence on the prediction of the treecover (positive). Band 2 and band 3 probably should not be taken into account when predicting the tree cover.
+--------------------------------------------------------------------------------------------------------------------------------
 
+(3)Plot the predicted tree cover raster and compare with the original VCF raster.
 ```{r}
-
+predTC <- predict(gewata, model=regression, na.rm=TRUE)
+predTC[predTC<0] <- NA
+plot(predTC)
+plot(vcfGewata)
 ```
 
-Are the differences between the predicted and actual tree cover the same for all of the 3 classes we used for the random forest classfication? Using the training polygons from the random forest classification, calculate the RMSE separately for each of the classes and compare. 
 
+Conclusion: By comparing both plots I see little difference. This was already visible in the summary of the regression; the errors are really small for instance.
+--------------------------------------------------------------------------------------------------------------------------------
+
+(4)Compute the RMSE between your predicted and the actual tree cover values
 ```{r}
-
+RMSE <- sqrt(mean((vcfGewata-predTC)^2))
 ```
 
+(5)Are the differences between the predicted and actual tree cover the same for all of the 3 classes we used for the random forest classfication? Using the training polygons from the random forest classification, calculate the RMSE separately for each of the classes and compare. 
+```{r}
+load("AdvancedRasterAnalysis-gh-pages/data/trainingPoly.rda")
+trainingPoly@data$Code <- as.numeric(trainingPoly@data$Class)
+classes <- rasterize(trainingPoly, predTC, field='Code')
+zonal1 <- zonal(predTC, classes, fun(x)=sqrt(mean((vcfGewata-x)^2)))
+```
+
+Conclusion:
+--------------------------------------------------------------------------------------------------------------------------------
 
 
